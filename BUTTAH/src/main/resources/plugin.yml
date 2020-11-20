@@ -1,0 +1,7 @@
+name: Butter
+version: ${project.version}
+main: me.stevenlol.butter.Main
+api-version: 1.16
+depend: [ Vault ]
+authors: [ stevenlol ]
+description: Butter, designed and programmed for Minecraft 1.16+
