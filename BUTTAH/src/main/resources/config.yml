@@ -5,3 +5,5 @@
 
 chat-format: "&f%player%&e >&f %message%"
 prefix: "&8&l(&6Butter&8&l)&r "
+join-message: "&a%player% joined."
+leave-message: "&c%player% left."
