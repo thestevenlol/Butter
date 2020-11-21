@@ -6,4 +6,15 @@ depend: [ Vault ]
 authors: [ stevenlol ]
 description: Butter, designed and programmed for Minecraft 1.16+
 commands:
+  global:
+    description: Set channel to global chat.
+    aliases: ["g"]
+  staff:
+    description: Set channel to staff chat.
 permissions:
+  butter:
+    channel:
+      global:
+        default: true
+      staff:
+        default: false

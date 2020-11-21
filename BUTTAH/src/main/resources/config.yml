@@ -3,7 +3,11 @@
 # Made by stevenlol from Discord
 # Version 1.0.0
 
-chat-format: "&f%player%&e >&f %message%"
 prefix: "&8&l(&6Butter&8&l)&r "
 join-message: "&a%player% joined."
 leave-message: "&c%player% left."
+channels:
+  global:
+    prefix: "&7[&6G&7]"
+  staff:
+    prefix: "&7[&4Staff&7]"

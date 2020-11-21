@@ -1,6 +1,7 @@
 package me.stevenlol.butter.listeners;
 
 import me.stevenlol.butter.Main;
+import me.stevenlol.butter.utils.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -10,12 +11,12 @@ public class JoinLeaveMessage implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        e.setJoinMessage(Main.getPlugin().getConfig().getString("join-message"));
+        e.setJoinMessage(ChatColor.chat(Main.getPlugin().getConfig().getString("join-message")));
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        e.setQuitMessage(Main.getPlugin().getConfig().getString("leave-message"));
+        e.setQuitMessage(ChatColor.chat(Main.getPlugin().getConfig().getString("leave-message")));
     }
 
 }

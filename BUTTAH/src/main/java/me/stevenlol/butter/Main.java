@@ -1,5 +1,7 @@
 package me.stevenlol.butter;
 
+import me.stevenlol.butter.commands.GlobalChannelCommand;
+import me.stevenlol.butter.commands.StaffChannelCommand;
 import me.stevenlol.butter.listeners.ChatListener;
 import me.stevenlol.butter.listeners.JoinLeaveMessage;
 import me.stevenlol.butter.sql.MySQL;
@@ -30,7 +32,8 @@ public final class Main extends JavaPlugin {
     }
 
     public void registerCommand() {
-
+        getCommand("global").setExecutor(new GlobalChannelCommand());
+        getCommand("staff").setExecutor(new StaffChannelCommand());
     }
 
     public void registerListener() {
