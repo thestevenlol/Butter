@@ -11,3 +11,13 @@ channels:
     prefix: "&7[&6G&7]"
   staff:
     prefix: "&7[&4Staff&7]"
+
+punishment:
+  mute:
+    format:
+      - "&8&m==========&8[&c&l MUTED &8]&8&m=========="
+      - "&cMuted by:&7 %muter%"
+      - "&cReason:&7 %reason%"
+      - "&cTime left:&7 %duration%"
+      - "&cLearn from these mistakes!"
+      - "&8&m==========&8[&c&l MUTED &8]&8&m=========="

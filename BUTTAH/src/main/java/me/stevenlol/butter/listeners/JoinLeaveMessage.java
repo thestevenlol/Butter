@@ -11,12 +11,12 @@ public class JoinLeaveMessage implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        e.setJoinMessage(ChatColor.chat(Main.getPlugin().getConfig().getString("join-message")));
+        e.setJoinMessage(ChatColor.chat(Main.getPlugin().getConfig().getString("join-message").replace("%player%", e.getPlayer().getName())));
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        e.setQuitMessage(ChatColor.chat(Main.getPlugin().getConfig().getString("leave-message")));
+        e.setQuitMessage(ChatColor.chat(Main.getPlugin().getConfig().getString("leave-message").replace("%player%", e.getPlayer().getName())));
     }
 
 }

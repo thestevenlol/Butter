@@ -2,49 +2,39 @@ package me.stevenlol.butter.sql;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class MySQL {
 
+    private String host = "localhost";
+    private int port = 3306;
+    private String database = "main";
+    private String username = "root";
+    private String password = "";
     private Connection connection;
-    private String host, database, username, password;
-    private int port;
 
-    public MySQL() {
-        host = "localhost";
-        port = 3306;
-        database = "main";
-        username = "root";
-        password = "";
+    public boolean isConnected() {
+        return (connection != null);
     }
 
-    public void connect() throws SQLException, ClassNotFoundException {
-        if (connection != null && !connection.isClosed()) {
-            return;
+    public void connect() throws ClassNotFoundException, SQLException {
+        if (!isConnected()) {
+            connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false", username, password);
         }
+    }
 
-        synchronized (this) {
-            if (connection != null && !connection.isClosed()) {
-                return;
+    public void disconnect() {
+        if (isConnected()) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://" + this.host+ ":" + this.port + "/" + this.database, this.username, this.password);
         }
     }
 
-    public void disconnect() throws SQLException, ClassNotFoundException {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
-        }
-    }
-
-    public boolean connected() throws SQLException {
-        return connection != null && !connection.isClosed();
-    }
-
-    public PreparedStatement createStatement(String sql) throws SQLException {
-        return connection.prepareStatement(sql);
+    public Connection getConnection() {
+        return connection;
     }
 
 }

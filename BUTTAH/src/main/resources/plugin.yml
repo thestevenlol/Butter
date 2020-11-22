@@ -11,8 +11,15 @@ commands:
     aliases: ["g"]
   staff:
     description: Set channel to staff chat.
+  mute:
+    description: Mute a player.
+    aliases: ["punish"]
+
 permissions:
   butter:
+    moderation:
+      mute:
+        default: false
     channel:
       global:
         default: true
