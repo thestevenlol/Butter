@@ -2,8 +2,12 @@ package me.stevenlol.butter;
 
 import me.stevenlol.butter.commands.channel.GlobalChannelCommand;
 import me.stevenlol.butter.commands.channel.StaffChannelCommand;
+import me.stevenlol.butter.commands.punish.BanCommand;
 import me.stevenlol.butter.commands.punish.MuteCommand;
+import me.stevenlol.butter.commands.punish.UnBanCommand;
+import me.stevenlol.butter.commands.punish.UnMuteCommand;
 import me.stevenlol.butter.listeners.ChatListener;
+import me.stevenlol.butter.listeners.CheckBan;
 import me.stevenlol.butter.listeners.JoinLeaveMessage;
 import me.stevenlol.butter.sql.MySQL;
 import me.stevenlol.butter.utils.ChatColor;
@@ -66,21 +70,27 @@ public final class Main extends JavaPlugin {
     }
 
     public void setupSQL() throws SQLException {
-        PreparedStatement ps = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS mutes (NAME VARCHAR(100),UUID VARCHAR(100),TIME INT(10),REASON VARCHAR(100),MUTER VARCHAR(100))");
-        PreparedStatement ps1 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS reports (MESSAGE VARCHAR(100),REPORTER VARCHAR(100))");
+        PreparedStatement ps = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS mutes (NAME VARCHAR(100),UUID VARCHAR(100),TIME INT(10),REASON VARCHAR(256),MUTER VARCHAR(100))");
+        PreparedStatement ps1 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS bans (NAME VARCHAR(100),UUID VARCHAR(100),REASON VARCHAR(256),BANNER VARCHAR(100))");
+        PreparedStatement ps2 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS reports (MESSAGE VARCHAR(100),REPORTER VARCHAR(100))");
         ps.executeUpdate();
         ps1.executeUpdate();
+        ps2.executeUpdate();
     }
 
     public void registerCommand() {
         getCommand("global").setExecutor(new GlobalChannelCommand());
         getCommand("staff").setExecutor(new StaffChannelCommand());
         getCommand("mute").setExecutor(new MuteCommand());
+        getCommand("unmute").setExecutor(new UnMuteCommand());
+        getCommand("ban").setExecutor(new BanCommand());
+        getCommand("unban").setExecutor(new UnBanCommand());
     }
 
     public void registerListener() {
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
         getServer().getPluginManager().registerEvents(new JoinLeaveMessage(), this);
+        getServer().getPluginManager().registerEvents(new CheckBan(), this);
     }
 
     @Override

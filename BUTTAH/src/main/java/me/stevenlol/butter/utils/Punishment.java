@@ -22,15 +22,14 @@ public class Punishment {
                 muter.sendMessage(ChatColor.chat(config.getPrefix() + "&c" + mutee.getName() + " is already muted."));
                 return;
             }
-            createPlayer(mutee, muter, duration, reason, sql);
+            createMutePlayer(mutee, muter, duration, reason, sql);
             muter.sendMessage(ChatColor.chat(config.getPrefix() + "&6Muted " + mutee.getName() + "."));
         }
     }
 
-    private void createPlayer(OfflinePlayer mutee, Player muter, int duration, String reason, MySQL sql) throws SQLException {
+    private void createMutePlayer(OfflinePlayer mutee, Player muter, int duration, String reason, MySQL sql) {
         Bukkit.getScheduler().runTaskAsynchronously(Main.getPlugin(), () -> {
             try {
-                System.out.println("setting start");
                 PreparedStatement ps = sql.getConnection().prepareStatement("INSERT INTO mutes (NAME,UUID,TIME,REASON,MUTER) VALUES (?,?,?,?,?)");
                 ps.setString(1, mutee.getName());
                 ps.setString(2, mutee.getUniqueId().toString());
@@ -39,7 +38,6 @@ public class Punishment {
                 ps.setString(5, muter.getUniqueId().toString());
                 ps.executeUpdate();
                 ps.close();
-                System.out.println("setting end");
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
             }
@@ -49,9 +47,8 @@ public class Punishment {
     public boolean muted(OfflinePlayer player, MySQL sql) throws SQLException {
         synchronized (Main.getPlugin()) {
             UUID uuid = player.getUniqueId();
-            PreparedStatement ps = sql.getConnection().prepareStatement("SELECT * FROM mutes WHERE UUID=? AND TIME != ?");
+            PreparedStatement ps = sql.getConnection().prepareStatement("SELECT * FROM mutes WHERE UUID=? AND TIME != 0");
             ps.setString(1, uuid.toString());
-            ps.setInt(2, 0);
             ResultSet rs = ps.executeQuery();
             boolean result = rs.next();
             ps.close();
@@ -89,6 +86,57 @@ public class Punishment {
 
         });
 
+    }
+
+
+    public boolean banned(OfflinePlayer player, MySQL sql) throws SQLException {
+        synchronized (Main.getPlugin()) {
+            UUID uuid = player.getUniqueId();
+            PreparedStatement ps = sql.getConnection().prepareStatement("SELECT * FROM bans WHERE UUID=?");
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            boolean result = rs.next();
+            ps.close();
+            return result;
+        }
+    }
+
+    public void banPlayer(OfflinePlayer banee, Player banner, String reason) throws SQLException {
+        MySQL sql = Main.getPlugin().getSql();
+        Config config = new Config();
+        if (sql.isConnected()) {
+            if (banned(banee, sql)) {
+                banner.sendMessage(ChatColor.chat(config.getPrefix() + "&c" + banee.getName() + " is already banned."));
+                return;
+            }
+            createBanPlayer(banee, banner, reason, sql);
+            if (banee.isOnline()) {
+                StringBuilder x = new StringBuilder();
+                List<String> format = Main.getPlugin().getConfig().getStringList("punishment.ban.format");
+                for (String l : format) {
+                    x.append(l.replace("%reason%", reason)
+                            .replace("%banner%", banner.getName()) + "\n");
+                }
+                banee.getPlayer().kickPlayer(ChatColor.chat(x.toString().trim()));
+            }
+            banner.sendMessage(ChatColor.chat(config.getPrefix() + "&6Permanently banned " + banee.getName() + "."));
+        }
+    }
+
+    private void createBanPlayer(OfflinePlayer banee, Player banner, String reason, MySQL sql) {
+        Bukkit.getScheduler().runTaskAsynchronously(Main.getPlugin(), () -> {
+            try {
+                PreparedStatement ps = sql.getConnection().prepareStatement("INSERT INTO bans (NAME,UUID,REASON,BANNER) VALUES (?,?,?,?)");
+                ps.setString(1, banee.getName());
+                ps.setString(2, banee.getUniqueId().toString());
+                ps.setString(3, reason);
+                ps.setString(4, banner.getUniqueId().toString());
+                ps.executeUpdate();
+                ps.close();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        });
     }
 
     public String timeFormat(int seconds) {

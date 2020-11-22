@@ -14,11 +14,24 @@ commands:
   mute:
     description: Mute a player.
     aliases: ["punish"]
+  unmute:
+    description: Unmute a player.
+    aliases: ["unpunish"]
+  ban:
+    description: Ban a player.
+  unban:
+    description: Un-bans a player
 
 permissions:
   butter:
     moderation:
       mute:
+        default: false
+      unmute:
+        default: false
+      ban:
+        default: false
+      unban:
         default: false
     channel:
       global:

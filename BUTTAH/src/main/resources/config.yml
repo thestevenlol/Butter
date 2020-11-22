@@ -21,3 +21,10 @@ punishment:
       - "&cTime left:&7 %duration%"
       - "&cLearn from these mistakes!"
       - "&8&m==========&8[&c&l MUTED &8]&8&m=========="
+  ban:
+    format:
+      - "&6&lButter"
+      - ""
+      - "&cYou have been permanently banned from the server."
+      - "&cReason:&7 %reason%"
+      - "&cBanned by:&7 %banner%"
