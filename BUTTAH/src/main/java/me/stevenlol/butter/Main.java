@@ -6,6 +6,7 @@ import me.stevenlol.butter.commands.punish.BanCommand;
 import me.stevenlol.butter.commands.punish.MuteCommand;
 import me.stevenlol.butter.commands.punish.UnBanCommand;
 import me.stevenlol.butter.commands.punish.UnMuteCommand;
+import me.stevenlol.butter.commands.report.ReportCommand;
 import me.stevenlol.butter.listeners.ChatListener;
 import me.stevenlol.butter.listeners.CheckBan;
 import me.stevenlol.butter.listeners.JoinLeaveMessage;
@@ -34,6 +35,8 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+
         plugin = this;
         config = new Config();
         sql = new MySQL();
@@ -72,7 +75,7 @@ public final class Main extends JavaPlugin {
     public void setupSQL() throws SQLException {
         PreparedStatement ps = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS mutes (NAME VARCHAR(100),UUID VARCHAR(100),TIME INT(10),REASON VARCHAR(256),MUTER VARCHAR(100))");
         PreparedStatement ps1 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS bans (NAME VARCHAR(100),UUID VARCHAR(100),REASON VARCHAR(256),BANNER VARCHAR(100))");
-        PreparedStatement ps2 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS reports (MESSAGE VARCHAR(100),REPORTER VARCHAR(100))");
+        PreparedStatement ps2 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS reports (MESSAGE VARCHAR(100),REPORTER VARCHAR(100),REPORTEE VARCHAR(100))");
         ps.executeUpdate();
         ps1.executeUpdate();
         ps2.executeUpdate();
@@ -85,12 +88,14 @@ public final class Main extends JavaPlugin {
         getCommand("unmute").setExecutor(new UnMuteCommand());
         getCommand("ban").setExecutor(new BanCommand());
         getCommand("unban").setExecutor(new UnBanCommand());
+        getCommand("report").setExecutor(new ReportCommand());
     }
 
     public void registerListener() {
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
         getServer().getPluginManager().registerEvents(new JoinLeaveMessage(), this);
         getServer().getPluginManager().registerEvents(new CheckBan(), this);
+        getServer().getPluginManager().registerEvents(new ReportCommand(), this);
     }
 
     @Override

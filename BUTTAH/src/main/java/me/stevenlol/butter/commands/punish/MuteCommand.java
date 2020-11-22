@@ -1,5 +1,6 @@
 package me.stevenlol.butter.commands.punish;
 
+import me.stevenlol.butter.Main;
 import me.stevenlol.butter.utils.ChatColor;
 import me.stevenlol.butter.utils.Config;
 import me.stevenlol.butter.utils.Punishment;
@@ -40,7 +41,10 @@ public class MuteCommand implements CommandExecutor {
                     return true;
                 }
                 try {
-                    punishment.mutePlayer(player, target, reason.toString().trim(), 10);
+                    punishment.mutePlayer(player, target, reason.toString().trim(), punishment.calculateMuteDuration(punishment.getTotalMutes(target)));
+                    if (target.isOnline()) {
+                        punishment.sendMuteMessage(target.getPlayer(), Main.getPlugin().getSql());
+                    }
                 } catch (SQLException throwables) {
                     throwables.printStackTrace();
                 }

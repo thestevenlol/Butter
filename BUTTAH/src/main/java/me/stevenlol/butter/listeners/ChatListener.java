@@ -65,6 +65,7 @@ public class ChatListener implements Listener {
 
         TextComponent component2 = new TextComponent(ChatColor.chat(" " + message));
         component2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.chat("&cClick to report message.")).create()));
+        component2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/report " + player.getUniqueId().toString() + " " + message));
 
 
         channelHandler(player, getChannel(player), component1, component2);

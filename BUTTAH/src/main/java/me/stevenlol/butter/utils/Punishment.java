@@ -139,6 +139,45 @@ public class Punishment {
         });
     }
 
+    public int calculateMuteDuration(int totalMutes) {
+        switch (totalMutes) {
+            case 0:
+                return 300;
+            case 1:
+                return 600;
+            case 2:
+                return 900;
+            case 3:
+                return 1800;
+            case 4:
+                return 3600;
+            case 5:
+                return 7200;
+            case 6:
+                return 21600;
+            case 7:
+                return 86400;
+            case 8:
+                return 604800;
+            case 9:
+                return -1;
+        }
+        return 0;
+    }
+
+    public int getTotalMutes(OfflinePlayer player) {
+        MySQL sql = Main.getPlugin().getSql();
+        try {
+            PreparedStatement ps = sql.getConnection().prepareStatement("SELECT COUNT(?) FROM mutes");
+            ps.setString(1, player.getUniqueId().toString());
+            ResultSet rs = ps.executeQuery();
+            return rs.getFetchSize();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return 0;
+    }
+
     public String timeFormat(int seconds) {
 
         String day = "";
