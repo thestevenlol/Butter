@@ -14,6 +14,8 @@ import java.util.UUID;
 
 public class Punishment {
 
+    private final Object lock = new Object();
+
     public void mutePlayer(Player muter, OfflinePlayer mutee, String reason, int duration) throws SQLException {
         MySQL sql = Main.getPlugin().getSql();
         Config config = new Config();
@@ -27,21 +29,16 @@ public class Punishment {
         }
     }
 
-    private void createMutePlayer(OfflinePlayer mutee, Player muter, int duration, String reason, MySQL sql) {
-        Bukkit.getScheduler().runTaskAsynchronously(Main.getPlugin(), () -> {
-            try {
-                PreparedStatement ps = sql.getConnection().prepareStatement("INSERT INTO mutes (NAME,UUID,TIME,REASON,MUTER) VALUES (?,?,?,?,?)");
-                ps.setString(1, mutee.getName());
-                ps.setString(2, mutee.getUniqueId().toString());
-                ps.setInt(3, duration);
-                ps.setString(4, reason);
-                ps.setString(5, muter.getUniqueId().toString());
-                ps.executeUpdate();
-                ps.close();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            }
-        });
+    private void createMutePlayer(OfflinePlayer mutee, Player muter, int duration, String reason, MySQL sql) throws SQLException {
+        synchronized (this.lock) {
+            PreparedStatement ps = sql.createStatement("INSERT INTO mutes (NAME,UUID,TIME,REASON,MUTER) VALUES (?,?,?,?,?)");
+            ps.setString(1, mutee.getName());
+            ps.setString(2, mutee.getUniqueId().toString());
+            ps.setInt(3, duration);
+            ps.setString(4, reason);
+            ps.setString(5, muter.getUniqueId().toString());
+            sql.update(ps);
+        }
     }
 
     public boolean muted(OfflinePlayer player, MySQL sql) throws SQLException {
@@ -51,114 +48,116 @@ public class Punishment {
             ps.setString(1, uuid.toString());
             ResultSet rs = ps.executeQuery();
             boolean result = rs.next();
-            ps.close();
             return result;
         }
     }
 
     public void sendMuteMessage(Player player, MySQL sql) throws SQLException {
-
-        if (!muted(player, sql)) {
-            return;
-        }
-
-        Bukkit.getScheduler().runTaskAsynchronously(Main.getPlugin(), () -> {
+        synchronized (this.lock) {
+            if (!muted(player, sql)) {
+                return;
+            }
 
             try {
-                PreparedStatement ps = sql.getConnection().prepareStatement("SELECT * FROM mutes WHERE UUID=? AND TIME != 0");
+                PreparedStatement ps = sql.createStatement("SELECT * FROM mutes WHERE UUID=? AND TIME != 0");
                 ps.setString(1, player.getUniqueId().toString());
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    String muter = rs.getString(5);
-                    muter = Bukkit.getOfflinePlayer(UUID.fromString(muter)).getName();
-                    String reason = rs.getString(4);
-                    int duration = rs.getInt(3);
-                    List<String> format = Main.getPlugin().getConfig().getStringList("punishment.mute.format");
-                    for (String l : format) {
-                        player.sendMessage(ChatColor.chat(l.replace("%muter%", muter)
-                                .replace("%reason%", reason)
-                                .replace("%duration%", timeFormat(duration))));
+                sql.query(ps).whenCompleteAsync((rs, t) -> {
+                    try {
+                        if (rs.next()) {
+                            String muter = rs.getString(5);
+                            muter = Bukkit.getOfflinePlayer(UUID.fromString(muter)).getName();
+                            String reason = rs.getString(4);
+                            int duration = rs.getInt(3);
+                            List<String> format = Main.getPlugin().getConfig().getStringList("punishment.mute.format");
+                            if (duration == -1) {
+                                for (String l : format) {
+                                    player.sendMessage(ChatColor.chat(l.replace("%muter%", muter)
+                                            .replace("%reason%", reason)
+                                            .replace("%duration%", "Permanent")));
+                                }
+                            } else {
+                                for (String l : format) {
+                                    player.sendMessage(ChatColor.chat(l.replace("%muter%", muter)
+                                            .replace("%reason%", reason)
+                                            .replace("%duration%", timeFormat((duration)))));
+                                }
+                            }
+                        }
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
                     }
-                }
+                });
             } catch (SQLException throwable) {
                 throwable.printStackTrace();
             }
-
-        });
-
+        }
     }
 
 
     public boolean banned(OfflinePlayer player, MySQL sql) throws SQLException {
-        synchronized (Main.getPlugin()) {
+        synchronized (this.lock) {
             UUID uuid = player.getUniqueId();
             PreparedStatement ps = sql.getConnection().prepareStatement("SELECT * FROM bans WHERE UUID=?");
             ps.setString(1, uuid.toString());
             ResultSet rs = ps.executeQuery();
             boolean result = rs.next();
-            ps.close();
             return result;
         }
     }
 
     public void banPlayer(OfflinePlayer banee, Player banner, String reason) throws SQLException {
-        MySQL sql = Main.getPlugin().getSql();
-        Config config = new Config();
-        if (sql.isConnected()) {
-            if (banned(banee, sql)) {
-                banner.sendMessage(ChatColor.chat(config.getPrefix() + "&c" + banee.getName() + " is already banned."));
-                return;
-            }
-            createBanPlayer(banee, banner, reason, sql);
-            if (banee.isOnline()) {
-                StringBuilder x = new StringBuilder();
-                List<String> format = Main.getPlugin().getConfig().getStringList("punishment.ban.format");
-                for (String l : format) {
-                    x.append(l.replace("%reason%", reason)
-                            .replace("%banner%", banner.getName()) + "\n");
+        synchronized (this.lock) {
+            MySQL sql = Main.getSql();
+            Config config = new Config();
+            if (sql.isConnected()) {
+                if (banned(banee, sql)) {
+                    banner.sendMessage(ChatColor.chat(config.getPrefix() + "&c" + banee.getName() + " is already banned."));
+                    return;
                 }
-                banee.getPlayer().kickPlayer(ChatColor.chat(x.toString().trim()));
+                createBanPlayer(banee, banner, reason, sql);
+                if (banee.isOnline()) {
+                    StringBuilder x = new StringBuilder();
+                    List<String> format = Main.getPlugin().getConfig().getStringList("punishment.ban.format");
+                    for (String l : format) {
+                        x.append(l.replace("%reason%", reason)
+                                .replace("%banner%", banner.getName()) + "\n");
+                    }
+                    banee.getPlayer().kickPlayer(ChatColor.chat(x.toString().trim()));
+                }
+                banner.sendMessage(ChatColor.chat(config.getPrefix() + "&6Permanently banned " + banee.getName() + "."));
             }
-            banner.sendMessage(ChatColor.chat(config.getPrefix() + "&6Permanently banned " + banee.getName() + "."));
         }
     }
 
-    private void createBanPlayer(OfflinePlayer banee, Player banner, String reason, MySQL sql) {
-        Bukkit.getScheduler().runTaskAsynchronously(Main.getPlugin(), () -> {
-            try {
-                PreparedStatement ps = sql.getConnection().prepareStatement("INSERT INTO bans (NAME,UUID,REASON,BANNER) VALUES (?,?,?,?)");
-                ps.setString(1, banee.getName());
-                ps.setString(2, banee.getUniqueId().toString());
-                ps.setString(3, reason);
-                ps.setString(4, banner.getUniqueId().toString());
-                ps.executeUpdate();
-                ps.close();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            }
-        });
+    private void createBanPlayer(OfflinePlayer banee, Player banner, String reason, MySQL sql) throws SQLException {
+        PreparedStatement ps = sql.createStatement("INSERT INTO bans (NAME,UUID,REASON,BANNER) VALUES (?,?,?,?)");
+        ps.setString(1, banee.getName());
+        ps.setString(2, banee.getUniqueId().toString());
+        ps.setString(3, reason);
+        ps.setString(4, banner.getUniqueId().toString());
+        sql.update(ps);
     }
 
     public int calculateMuteDuration(int totalMutes) {
         switch (totalMutes) {
             case 0:
-                return 300;
+                return 1;
             case 1:
-                return 600;
+                return 2;
             case 2:
-                return 900;
+                return 3;
             case 3:
-                return 1800;
+                return 4;
             case 4:
-                return 3600;
+                return 5;
             case 5:
-                return 7200;
+                return 6;
             case 6:
-                return 21600;
+                return 7;
             case 7:
-                return 86400;
+                return 8;
             case 8:
-                return 604800;
+                return 9;
             case 9:
                 return -1;
         }
@@ -166,16 +165,20 @@ public class Punishment {
     }
 
     public int getTotalMutes(OfflinePlayer player) {
-        MySQL sql = Main.getPlugin().getSql();
-        try {
-            PreparedStatement ps = sql.getConnection().prepareStatement("SELECT COUNT(?) FROM mutes");
-            ps.setString(1, player.getUniqueId().toString());
-            ResultSet rs = ps.executeQuery();
-            return rs.getFetchSize();
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        synchronized (this.lock) {
+            MySQL sql = Main.getSql();
+            try {
+                PreparedStatement ps = sql.getConnection().prepareStatement("SELECT * FROM mutes WHERE UUID=?");
+                ps.setString(1, player.getUniqueId().toString());
+                ResultSet rs = ps.executeQuery();
+                rs.last();
+                System.out.println(rs.getRow());
+                return rs.getRow();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+            return 0;
         }
-        return 0;
     }
 
     public String timeFormat(int seconds) {

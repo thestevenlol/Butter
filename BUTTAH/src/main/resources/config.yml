@@ -12,6 +12,13 @@ channels:
   staff:
     prefix: "&7[&4Staff&7]"
 
+database:
+  host: "localhost"
+  port: 3306
+  database: "main"
+  username: "root"
+  password: ""
+
 punishment:
   mute:
     format:

@@ -1,6 +1,7 @@
 package me.stevenlol.butter.listeners;
 
 import me.stevenlol.butter.Main;
+import me.stevenlol.butter.sql.MySQL;
 import me.stevenlol.butter.utils.ChatColor;
 import me.stevenlol.butter.utils.Punishment;
 import net.md_5.bungee.api.ChatMessageType;
@@ -18,6 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class ChatListener implements Listener {
@@ -50,11 +52,16 @@ public class ChatListener implements Listener {
     @EventHandler
     public void mainChatListener(AsyncPlayerChatEvent e) throws SQLException {
         e.setCancelled(true);
+        MySQL sql = Main.getSql();
         Player player = e.getPlayer(); // player sending the message
         String message = e.getMessage(); // message getting sent
+        PreparedStatement ps = sql.createStatement("INSERT IGNORE INTO chat (UUID,MESSAGE) VALUES (?,?)");
+        ps.setString(1, player.getUniqueId().toString());
+        ps.setString(2, message);
+        sql.update(ps);
         Punishment punishment = new Punishment();
         if (punishment.muted(player, Main.getPlugin().getSql())) {
-            punishment.sendMuteMessage(player, Main.plugin.getSql());
+            punishment.sendMuteMessage(player, Main.getPlugin().getSql());
             return;
         }
 

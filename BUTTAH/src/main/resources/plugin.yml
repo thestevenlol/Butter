@@ -23,6 +23,7 @@ commands:
     description: Un-bans a player
   report:
     description: Report a message
+  head:
 
 permissions:
   butter:

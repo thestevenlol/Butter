@@ -28,14 +28,13 @@ import java.util.logging.Logger;
 
 public final class Main extends JavaPlugin {
 
-    public static Main plugin;
-    private MySQL sql;
+    private static Main plugin;
+    private static MySQL sql;
     private Config config;
     private static Chat chat = null;
 
     @Override
     public void onEnable() {
-        Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         plugin = this;
         config = new Config();
@@ -43,8 +42,10 @@ public final class Main extends JavaPlugin {
         try {
             sql.connect();
         } catch (SQLException | ClassNotFoundException throwable) {
+            throwable.printStackTrace();
             Logger.getLogger("Minecraft").severe("Could not connect to database, plugin shutting down.");
             getPluginLoader().disablePlugin(this);
+            return;
         }
         registerListener();
         registerCommand();
@@ -76,9 +77,11 @@ public final class Main extends JavaPlugin {
         PreparedStatement ps = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS mutes (NAME VARCHAR(100),UUID VARCHAR(100),TIME INT(10),REASON VARCHAR(256),MUTER VARCHAR(100))");
         PreparedStatement ps1 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS bans (NAME VARCHAR(100),UUID VARCHAR(100),REASON VARCHAR(256),BANNER VARCHAR(100))");
         PreparedStatement ps2 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS reports (MESSAGE VARCHAR(100),REPORTER VARCHAR(100),REPORTEE VARCHAR(100))");
-        ps.executeUpdate();
-        ps1.executeUpdate();
-        ps2.executeUpdate();
+        PreparedStatement ps3 = sql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS chat (UUID VARCHAR(100),MESSAGE VARCHAR(256))");
+        sql.update(ps);
+        sql.update(ps1);
+        sql.update(ps2);
+        sql.update(ps3);
     }
 
     public void registerCommand() {
@@ -117,7 +120,7 @@ public final class Main extends JavaPlugin {
         return chat;
     }
 
-    public MySQL getSql() {
+    public static MySQL getSql() {
         return sql;
     }
 
@@ -148,4 +151,7 @@ public final class Main extends JavaPlugin {
             }
         }, 0, 20);
     }
+
+
+
 }
